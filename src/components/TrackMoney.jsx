@@ -14,12 +14,22 @@ import {
   Filter
 } from 'lucide-react';
 
+// Safe date parser to handle Firestore Timestamps ({ seconds }), strings, and Date instances
+const parseOrderDate = (val) => {
+  if (!val) return null;
+  if (typeof val.toDate === 'function') return val.toDate();
+  if (val.seconds) return new Date(val.seconds * 1000);
+  const d = new Date(val);
+  return isNaN(d.getTime()) ? null : d;
+};
+
 export default function TrackMoney({ 
   orders = [], 
   shopSettings = {},
   onViewOrder 
 }) {
   const currency = shopSettings.currency || '₹';
+  const validOrders = Array.isArray(orders) ? orders.filter(Boolean) : [];
 
   // Filters state
   const [duration, setDuration] = useState('daily'); // 'daily', 'weekly', 'monthly'
@@ -43,14 +53,14 @@ export default function TrackMoney({
         const nextD = new Date(d);
         nextD.setDate(d.getDate() + 1);
 
-        const dayOrders = orders.filter(o => {
-          const ordDate = new Date(o.createdAt);
-          return ordDate >= d && ordDate < nextD;
+        const dayOrders = validOrders.filter(o => {
+          const ordDate = parseOrderDate(o?.createdAt);
+          return ordDate && ordDate >= d && ordDate < nextD;
         });
 
         const money = dayOrders.reduce((sum, o) => {
-          if (o.paymentStatus === 'paid') return sum + (o.grandTotal || 0);
-          if (o.paymentStatus === 'partial') return sum + Math.round((o.grandTotal || 0) * 0.5);
+          if (o?.paymentStatus === 'paid') return sum + (Number(o?.grandTotal) || 0);
+          if (o?.paymentStatus === 'partial') return sum + Math.round((Number(o?.grandTotal) || 0) * 0.5);
           return sum;
         }, 0);
 
@@ -79,18 +89,18 @@ export default function TrackMoney({
         const end = new Date(start);
         end.setDate(start.getDate() + 7);
 
-        const weekOrders = orders.filter(o => {
-          const ordDate = new Date(o.createdAt);
-          return ordDate >= start && ordDate < end;
+        const weekOrders = validOrders.filter(o => {
+          const ordDate = parseOrderDate(o?.createdAt);
+          return ordDate && ordDate >= start && ordDate < end;
         });
 
         const money = weekOrders.reduce((sum, o) => {
-          if (o.paymentStatus === 'paid') return sum + (o.grandTotal || 0);
-          if (o.paymentStatus === 'partial') return sum + Math.round((o.grandTotal || 0) * 0.5);
+          if (o?.paymentStatus === 'paid') return sum + (Number(o?.grandTotal) || 0);
+          if (o?.paymentStatus === 'partial') return sum + Math.round((Number(o?.grandTotal) || 0) * 0.5);
           return sum;
         }, 0);
 
-        const weight = weekOrders.reduce((sum, o) => sum + (parseFloat(o.totalWeight) || 0), 0);
+        const weight = weekOrders.reduce((sum, o) => sum + (parseFloat(o?.totalWeight) || 0), 0);
         const count = weekOrders.length;
 
         weeks.push({
@@ -110,18 +120,18 @@ export default function TrackMoney({
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const nextM = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
 
-      const monthOrders = orders.filter(o => {
-        const ordDate = new Date(o.createdAt);
-        return ordDate >= d && ordDate < nextM;
+      const monthOrders = validOrders.filter(o => {
+        const ordDate = parseOrderDate(o?.createdAt);
+        return ordDate && ordDate >= d && ordDate < nextM;
       });
 
       const money = monthOrders.reduce((sum, o) => {
-        if (o.paymentStatus === 'paid') return sum + (o.grandTotal || 0);
-        if (o.paymentStatus === 'partial') return sum + Math.round((o.grandTotal || 0) * 0.5);
+        if (o?.paymentStatus === 'paid') return sum + (Number(o?.grandTotal) || 0);
+        if (o?.paymentStatus === 'partial') return sum + Math.round((Number(o?.grandTotal) || 0) * 0.5);
         return sum;
       }, 0);
 
-      const weight = monthOrders.reduce((sum, o) => sum + (parseFloat(o.totalWeight) || 0), 0);
+      const weight = monthOrders.reduce((sum, o) => sum + (parseFloat(o?.totalWeight) || 0), 0);
       const count = monthOrders.length;
 
       months.push({
@@ -133,7 +143,7 @@ export default function TrackMoney({
       });
     }
     return months;
-  }, [orders, duration]);
+  }, [validOrders, duration]);
 
   // Max value calculation for chart scaling
   const maxValue = useMemo(() => {
@@ -176,32 +186,32 @@ export default function TrackMoney({
   // =========================================================================
   // 2. FINANCIAL KPI TOTALS
   // =========================================================================
-  const totalMoneyCollected = orders.reduce((sum, o) => {
-    if (o.paymentStatus === 'paid') return sum + (o.grandTotal || 0);
-    if (o.paymentStatus === 'partial') return sum + Math.round((o.grandTotal || 0) * 0.5);
+  const totalMoneyCollected = validOrders.reduce((sum, o) => {
+    if (o?.paymentStatus === 'paid') return sum + (Number(o?.grandTotal) || 0);
+    if (o?.paymentStatus === 'partial') return sum + Math.round((Number(o?.grandTotal) || 0) * 0.5);
     return sum;
   }, 0);
 
-  const totalPendingDue = orders.reduce((sum, o) => {
-    if (o.paymentStatus === 'pending') return sum + (o.grandTotal || 0);
-    if (o.paymentStatus === 'partial') return sum + Math.round((o.grandTotal || 0) * 0.5);
+  const totalPendingDue = validOrders.reduce((sum, o) => {
+    if (o?.paymentStatus === 'pending') return sum + (Number(o?.grandTotal) || 0);
+    if (o?.paymentStatus === 'partial') return sum + Math.round((Number(o?.grandTotal) || 0) * 0.5);
     return sum;
   }, 0);
 
-  const totalWeightProcessed = orders.reduce(
-    (sum, o) => sum + (parseFloat(o.totalWeight) || 0), 
+  const totalWeightProcessed = validOrders.reduce(
+    (sum, o) => sum + (parseFloat(o?.totalWeight) || 0), 
     0
   );
 
-  const averageOrderValue = orders.length > 0 
-    ? Math.round(orders.reduce((sum, o) => sum + (o.grandTotal || 0), 0) / orders.length) 
+  const averageOrderValue = validOrders.length > 0 
+    ? Math.round(validOrders.reduce((sum, o) => sum + (Number(o?.grandTotal) || 0), 0) / validOrders.length) 
     : 0;
 
   // =========================================================================
   // 3. RECENT PAYMENTS RECEIVED LIST
   // =========================================================================
-  const recentPayments = orders
-    .filter(o => o.paymentStatus === 'paid' || o.paymentStatus === 'partial')
+  const recentPayments = validOrders
+    .filter(o => o?.paymentStatus === 'paid' || o?.paymentStatus === 'partial')
     .slice(0, 15);
 
   return (

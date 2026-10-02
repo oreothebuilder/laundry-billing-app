@@ -34,10 +34,18 @@ export default function BillModal({
 
   if (!order) return null;
 
-  const currency = shopSettings.currency || '₹';
+  const parseOrderDate = (val) => {
+    if (!val) return null;
+    if (typeof val.toDate === 'function') return val.toDate();
+    if (val.seconds) return new Date(val.seconds * 1000);
+    const d = new Date(val);
+    return isNaN(d.getTime()) ? null : d;
+  };
+
+  const currency = shopSettings?.currency || '₹';
   const whatsappUrl = getWhatsAppShareUrl(order.customerPhone, buildWhatsAppReceiptMessage(order, shopSettings));
   
-  const upiId = (shopSettings.shopUpiId || '').trim();
+  const upiId = (shopSettings?.shopUpiId || '').trim();
   const upiUri = upiId ? buildUpiPaymentUrl(order, shopSettings) : '';
   const qrCodeImgUrl = upiUri ? `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(upiUri)}&margin=2` : '';
 
@@ -56,14 +64,17 @@ export default function BillModal({
     window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
   };
 
-  const items = order.items || [];
-  const regItems = items.filter(i => i.serviceCategory === 'regular');
-  const premItems = items.filter(i => i.serviceCategory === 'premium');
-  const dcItems = items.filter(i => i.serviceCategory === 'dry_cleaning');
-  const othItems = items.filter(i => i.serviceCategory === 'others');
+  const items = Array.isArray(order.items)
+    ? order.items
+    : (order.items && typeof order.items === 'object' ? Object.values(order.items) : []);
+
+  const regItems = items.filter(i => i?.serviceCategory === 'regular');
+  const premItems = items.filter(i => i?.serviceCategory === 'premium');
+  const dcItems = items.filter(i => i?.serviceCategory === 'dry_cleaning');
+  const othItems = items.filter(i => i?.serviceCategory === 'others');
 
   // Format service name(s)
-  const serviceDisplayName = order.selectedServices
+  const serviceDisplayName = Array.isArray(order.selectedServices)
     ? order.selectedServices.map(s => {
         if (s === 'regular') return 'Regular Wash';
         if (s === 'premium') return 'Premium Care';
@@ -71,6 +82,11 @@ export default function BillModal({
         return 'Others';
       }).join(' + ')
     : (order.serviceName || 'Laundry Service');
+
+  const formattedDate = (() => {
+    const d = parseOrderDate(order.createdAt);
+    return d ? d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : '';
+  })();
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/70 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
@@ -171,7 +187,7 @@ export default function BillModal({
                       #{order.orderId}
                     </span>
                     <p className="text-[10px] text-slate-400">
-                      {new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                      {formattedDate || 'Recent'}
                     </p>
                   </div>
                 </div>

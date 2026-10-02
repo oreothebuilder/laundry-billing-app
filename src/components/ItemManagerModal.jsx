@@ -66,7 +66,7 @@ export default function ItemManagerModal({
   };
 
   const handleDeleteItem = (itemId, itemName) => {
-    if (confirm(`Remove "${itemName}" from ${currentServiceMeta.name}?`)) {
+    if (window.confirm(`Remove "${itemName}" from ${currentServiceMeta.name}?`)) {
       const updatedCategoryList = currentCategoryClothes.filter(item => item.id !== itemId);
       const updatedData = {
         ...data,
@@ -79,7 +79,7 @@ export default function ItemManagerModal({
   };
 
   const handleResetCurrentCategory = () => {
-    if (confirm(`Reset clothes & rates for ${currentServiceMeta.name} back to default?`)) {
+    if (window.confirm(`Reset clothes & rates for ${currentServiceMeta.name} back to default?`)) {
       const updatedData = {
         ...data,
         [activeCategory]: DEFAULT_CATEGORY_ITEMS[activeCategory] || []
@@ -92,7 +92,7 @@ export default function ItemManagerModal({
   };
 
   const handleResetAllCategories = () => {
-    if (confirm('Reset clothes & rates for ALL 4 service categories back to factory defaults?')) {
+    if (window.confirm('Reset clothes & rates for ALL 4 service categories back to factory defaults?')) {
       setData(DEFAULT_CATEGORY_ITEMS);
       onSaveCategoryItems(DEFAULT_CATEGORY_ITEMS);
       setSaveFeedback('All categories reset to defaults.');

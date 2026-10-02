@@ -14,9 +14,19 @@ import {
   Send,
   Eye,
   Trash2,
-  Phone
+  Phone,
+  FileText
 } from 'lucide-react';
 import { buildWhatsAppReceiptMessage, getWhatsAppShareUrl, formatDisplayPhoneNumber } from '../utils/whatsappHelper';
+
+// Safe date parser to handle Firestore Timestamps ({ seconds }), strings, and Date instances
+const parseOrderDate = (val) => {
+  if (!val) return null;
+  if (typeof val.toDate === 'function') return val.toDate();
+  if (val.seconds) return new Date(val.seconds * 1000);
+  const d = new Date(val);
+  return isNaN(d.getTime()) ? null : d;
+};
 
 export default function Dashboard({
   orders = [],
@@ -26,15 +36,20 @@ export default function Dashboard({
   onUpdatePaymentStatus,
   onDeleteOrder
 }) {
-  const currency = shopSettings.currency || '₹';
+  const currency = shopSettings?.currency || '₹';
+  const validOrders = Array.isArray(orders) ? orders.filter(Boolean) : [];
 
   const handleSendWhatsApp = (order) => {
+    if (!order) return;
     const msg = buildWhatsAppReceiptMessage(order, shopSettings);
     const url = getWhatsAppShareUrl(order.customerPhone, msg);
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
-  const displayOrders = orders.slice(0, 8);
+  const displayOrders = validOrders.slice(0, 8);
+
+  // 1. Total bills count
+  const totalBillsCount = validOrders.length;
 
   // 2. Money collected this week
   // Calculate start of current week (Monday 00:00:00)
@@ -45,17 +60,21 @@ export default function Dashboard({
   startOfWeek.setDate(now.getDate() - distanceToMonday);
   startOfWeek.setHours(0, 0, 0, 0);
 
-  const thisWeekOrders = orders.filter(o => new Date(o.createdAt) >= startOfWeek);
+  const thisWeekOrders = validOrders.filter(o => {
+    const d = parseOrderDate(o?.createdAt);
+    return d && d >= startOfWeek;
+  });
+
   const moneyCollectedThisWeek = thisWeekOrders.reduce((sum, o) => {
-    if (o.paymentStatus === 'paid') return sum + (o.grandTotal || 0);
-    if (o.paymentStatus === 'partial') return sum + Math.round((o.grandTotal || 0) * 0.5);
+    if (o?.paymentStatus === 'paid') return sum + (Number(o?.grandTotal) || 0);
+    if (o?.paymentStatus === 'partial') return sum + Math.round((Number(o?.grandTotal) || 0) * 0.5);
     return sum;
   }, 0);
 
   // 3. Money remaining to be collected (Pending payments)
-  const moneyRemainingToCollect = orders.reduce((sum, o) => {
-    if (o.paymentStatus === 'pending') return sum + (o.grandTotal || 0);
-    if (o.paymentStatus === 'partial') return sum + Math.round((o.grandTotal || 0) * 0.5);
+  const moneyRemainingToCollect = validOrders.reduce((sum, o) => {
+    if (o?.paymentStatus === 'pending') return sum + (Number(o?.grandTotal) || 0);
+    if (o?.paymentStatus === 'partial') return sum + Math.round((Number(o?.grandTotal) || 0) * 0.5);
     return sum;
   }, 0);
 
@@ -76,7 +95,7 @@ export default function Dashboard({
               </span>
             </div>
             <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white">
-              {shopSettings.shopName || 'FreshPress Laundry'} POS
+              {shopSettings?.shopName || 'FreshPress Laundry'} POS
             </h1>
           </div>
 
@@ -84,7 +103,7 @@ export default function Dashboard({
           <button
             type="button"
             onClick={() => onNavigate('issue_bill')}
-            className="self-start sm:self-auto px-5 py-3 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-extrabold text-xs sm:text-sm rounded-2xl shadow-lg shadow-blue-600/30 transition-all active:scale-95 flex items-center gap-2 touch-manipulation"
+            className="self-start sm:self-auto px-5 py-3 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-extrabold text-xs sm:text-sm rounded-2xl shadow-lg shadow-blue-600/30 transition-all active:scale-95 flex items-center gap-2 touch-manipulation cursor-pointer"
           >
             <PlusCircle className="w-4 h-4 stroke-[2.5]" />
             <span>+ Issue New Bill</span>
@@ -97,21 +116,21 @@ export default function Dashboard({
       {/* ========================================================================= */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         
-        {/* Metric 1: Orders Under Cleaning */}
+        {/* Metric 1: Total Bills */}
         <div 
-          onClick={() => onNavigate('issue_bill')}
+          onClick={() => onNavigate('history')}
           className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs hover:border-blue-400 transition-all cursor-pointer active:scale-[0.98]"
         >
           <div className="flex items-center justify-between mb-2">
             <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500">
-              Under Cleaning
+              Total Bills
             </span>
             <div className="w-8 h-8 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
               <Shirt className="w-4 h-4" />
             </div>
           </div>
           <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-            {underCleaningOrders.length}
+            {totalBillsCount}
           </div>
         </div>
 
@@ -156,50 +175,61 @@ export default function Dashboard({
       {/* ========================================================================= */}
       {/* QUICK SHORTCUT NAVIGATION BAR                                             */}
       {/* ========================================================================= */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
         <button
           type="button"
           onClick={() => onNavigate('issue_bill')}
-          className="p-3.5 bg-white hover:bg-slate-50 rounded-2xl border border-slate-200/80 text-left transition-all active:scale-95 shadow-2xs flex items-center gap-3"
+          className="p-3.5 bg-white hover:bg-slate-50 rounded-2xl border border-slate-200/80 text-left transition-all active:scale-95 shadow-2xs flex items-center gap-3 cursor-pointer"
         >
           <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
             <PlusCircle className="w-5 h-5" />
           </div>
-          <h4 className="font-extrabold text-sm text-slate-900">Issue Bill</h4>
+          <h4 className="font-extrabold text-xs sm:text-sm text-slate-900">Issue Bill</h4>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onNavigate('history')}
+          className="p-3.5 bg-white hover:bg-slate-50 rounded-2xl border border-slate-200/80 text-left transition-all active:scale-95 shadow-2xs flex items-center gap-3 cursor-pointer"
+        >
+          <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0">
+            <FileText className="w-5 h-5" />
+          </div>
+          <h4 className="font-extrabold text-xs sm:text-sm text-slate-900">All Bills</h4>
         </button>
 
         <button
           type="button"
           onClick={() => onNavigate('track_money')}
-          className="p-3.5 bg-white hover:bg-slate-50 rounded-2xl border border-slate-200/80 text-left transition-all active:scale-95 shadow-2xs flex items-center gap-3"
+          className="p-3.5 bg-white hover:bg-slate-50 rounded-2xl border border-slate-200/80 text-left transition-all active:scale-95 shadow-2xs flex items-center gap-3 cursor-pointer"
         >
           <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
             <TrendingUp className="w-5 h-5" />
           </div>
-          <h4 className="font-extrabold text-sm text-slate-900">Track Money</h4>
+          <h4 className="font-extrabold text-xs sm:text-sm text-slate-900">Track Money</h4>
         </button>
 
         <button
           type="button"
           onClick={() => onNavigate('settings')}
-          className="p-3.5 bg-white hover:bg-slate-50 rounded-2xl border border-slate-200/80 text-left transition-all active:scale-95 shadow-2xs flex items-center gap-3"
+          className="p-3.5 bg-white hover:bg-slate-50 rounded-2xl border border-slate-200/80 text-left transition-all active:scale-95 shadow-2xs flex items-center gap-3 cursor-pointer"
         >
           <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center shrink-0">
             <Settings className="w-5 h-5" />
           </div>
-          <h4 className="font-extrabold text-sm text-slate-900">Settings</h4>
+          <h4 className="font-extrabold text-xs sm:text-sm text-slate-900">Settings</h4>
         </button>
       </div>
 
       {/* ========================================================================= */}
-      {/* ORDERS UNDER CLEANING FULL-WIDTH VIEW                                     */}
+      {/* RECENT BILLS PREVIEW                                                      */}
       {/* ========================================================================= */}
       <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs">
         <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
           <div>
             <h3 className="font-extrabold text-sm sm:text-base text-slate-900 flex items-center gap-1.5">
               <Shirt className="w-4 h-4 text-blue-600" />
-              <span>Orders Under Cleaning</span>
+              <span>Recent Bills</span>
             </h3>
           </div>
 
@@ -220,14 +250,24 @@ export default function Dashboard({
         ) : (
           <div className="space-y-3 max-h-[520px] overflow-y-auto pr-1">
             {displayOrders.map(order => {
+              if (!order) return null;
               const isPaid = order.paymentStatus === 'paid';
-              const formattedDate = order.createdAt 
-                ? new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
+              const orderDate = parseOrderDate(order.createdAt);
+              const formattedDate = orderDate 
+                ? orderDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
                 : '';
+
+              const itemsList = Array.isArray(order.items) 
+                ? order.items 
+                : (order.items && typeof order.items === 'object' ? Object.values(order.items) : []);
+
+              const itemsSummary = itemsList.length > 0
+                ? itemsList.map(i => `${i?.quantity || 1}x ${i?.name || 'Item'}`).join(', ')
+                : 'No item list';
 
               return (
                 <div 
-                  key={order.orderId}
+                  key={order.orderId || Math.random()}
                   className="p-3.5 sm:p-4 rounded-2xl bg-slate-50/70 border border-slate-200/80 flex flex-col gap-2.5 hover:bg-slate-100/60 transition-colors"
                 >
                   {/* Order Info Header */}
@@ -238,7 +278,7 @@ export default function Dashboard({
                           #{order.orderId}
                         </span>
                         <span className="font-extrabold text-xs sm:text-sm text-slate-900">
-                          {order.customerName}
+                          {order.customerName || 'Customer'}
                         </span>
                       </div>
 
@@ -257,10 +297,10 @@ export default function Dashboard({
 
                     <div className="text-right shrink-0">
                       <span className="text-sm sm:text-base font-black text-slate-900">
-                        {currency}{order.grandTotal}
+                        {currency}{order.grandTotal ?? 0}
                       </span>
                       <div className="text-[10px] font-bold text-slate-500 uppercase mt-0.5">
-                        {order.serviceName}
+                        {order.serviceName || 'Laundry'}
                       </div>
                     </div>
                   </div>
@@ -268,10 +308,10 @@ export default function Dashboard({
                   {/* Order Clothes Summary */}
                   <div className="text-[11px] text-slate-600 bg-white/80 rounded-xl px-2.5 py-1.5 border border-slate-200/60 truncate">
                     <span className="font-bold text-slate-800">
-                      {order.totalPieces} clothes {order.totalWeight ? `(${order.totalWeight}kg)` : ''}:
+                      {order.totalPieces || itemsList.length} clothes {order.totalWeight ? `(${order.totalWeight}kg)` : ''}:
                     </span>{' '}
                     <span className="text-slate-500">
-                      {(order.items || []).map(i => `${i.quantity}x ${i.name}`).join(', ') || 'No item list'}
+                      {itemsSummary}
                     </span>
                   </div>
 
@@ -326,7 +366,7 @@ export default function Dashboard({
                     <button
                       type="button"
                       onClick={() => {
-                        if (window.confirm(`Delete bill #${order.orderId} for ${order.customerName}?`)) {
+                        if (window.confirm(`Delete bill #${order.orderId} for ${order.customerName || 'Customer'}?`)) {
                           onDeleteOrder && onDeleteOrder(order.orderId);
                         }
                       }}

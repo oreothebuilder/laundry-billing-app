@@ -112,27 +112,39 @@ export function buildPaymentRedirectUrl(order, shopSettings = {}) {
 }
 
 /**
+ * Safe date parser for Firestore Timestamps, ISO strings, etc.
+ */
+export function parseOrderDate(val) {
+  if (!val) return new Date();
+  if (typeof val.toDate === 'function') return val.toDate();
+  if (val.seconds) return new Date(val.seconds * 1000);
+  const d = new Date(val);
+  return isNaN(d.getTime()) ? new Date() : d;
+}
+
+/**
  * Builds a formatted WhatsApp text message receipt.
  * Supports multi-service orders (Regular wash, Premium care, Dry cleaning, Others).
  */
 export function buildWhatsAppReceiptMessage(order, shopSettings = {}) {
-  const currency = shopSettings.currency || '₹';
-  const shopName = shopSettings.shopName || 'FreshPress Laundry';
-  const upiId = shopSettings.shopUpiId || '';
+  if (!order) return '';
+  const currency = shopSettings?.currency || '₹';
+  const shopName = shopSettings?.shopName || 'FreshPress Laundry';
+  const upiId = shopSettings?.shopUpiId || '';
   
   let lines = [];
   
   lines.push(`🧺 *${shopName.toUpperCase()}* 🧺`);
   lines.push(`*🧾 INVOICE / RECEIPT*`);
   lines.push(`────────────────────────`);
-  lines.push(`📋 *Order ID:* #${order.orderId}`);
-  lines.push(`👤 *Customer:* ${order.customerName}`);
-  lines.push(`📞 *Phone:* ${formatDisplayPhoneNumber(order.customerPhone) || order.customerPhone}`);
-  lines.push(`📅 *Date:* ${new Date(order.createdAt || Date.now()).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`);
+  lines.push(`📋 *Order ID:* #${order.orderId || ''}`);
+  lines.push(`👤 *Customer:* ${order.customerName || 'Customer'}`);
+  lines.push(`📞 *Phone:* ${formatDisplayPhoneNumber(order.customerPhone) || order.customerPhone || ''}`);
+  lines.push(`📅 *Date:* ${parseOrderDate(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`);
   lines.push(`🚚 *Ready By:* ${order.deliveryDate || 'Within 48 Hours'}`);
 
   // Display services summary
-  const servicesList = order.selectedServices 
+  const servicesList = Array.isArray(order.selectedServices) 
     ? order.selectedServices.map(s => {
         if (s === 'regular') return 'Regular Wash';
         if (s === 'premium') return 'Premium Care';
@@ -145,11 +157,13 @@ export function buildWhatsAppReceiptMessage(order, shopSettings = {}) {
   lines.push(`────────────────────────`);
   lines.push(`*CLOTHES & SERVICES BREAKDOWN:*`);
 
-  const items = order.items || [];
-  const regItems = items.filter(i => i.serviceCategory === 'regular');
-  const premItems = items.filter(i => i.serviceCategory === 'premium');
-  const dcItems = items.filter(i => i.serviceCategory === 'dry_cleaning');
-  const othItems = items.filter(i => i.serviceCategory === 'others' || (!i.serviceCategory && order.pricingMode !== 'per_kg'));
+  const items = Array.isArray(order.items)
+    ? order.items
+    : (order.items && typeof order.items === 'object' ? Object.values(order.items) : []);
+  const regItems = items.filter(i => i?.serviceCategory === 'regular');
+  const premItems = items.filter(i => i?.serviceCategory === 'premium');
+  const dcItems = items.filter(i => i?.serviceCategory === 'dry_cleaning');
+  const othItems = items.filter(i => i?.serviceCategory === 'others' || (!i?.serviceCategory && order.pricingMode !== 'per_kg'));
 
   // 1. Regular Wash
   if (regItems.length > 0 || (order.regularWeight && Number(order.regularWeight) > 0)) {

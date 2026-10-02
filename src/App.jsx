@@ -65,14 +65,15 @@ function AppContent() {
 
     // 1. Subscribe to Orders in real-time
     const unsubscribeOrders = firebaseService.subscribeToOrders((loadedOrders) => {
-      setOrders(loadedOrders);
+      const safeOrders = Array.isArray(loadedOrders) ? loadedOrders.filter(Boolean) : [];
+      setOrders(safeOrders);
       
       // Extract unique customer contacts for auto-complete
       const customerMap = new Map();
-      loadedOrders.forEach(o => {
-        if (o.customerPhone && !customerMap.has(o.customerPhone)) {
+      safeOrders.forEach(o => {
+        if (o?.customerPhone && !customerMap.has(o.customerPhone)) {
           customerMap.set(o.customerPhone, {
-            name: o.customerName,
+            name: o.customerName || '',
             phone: o.customerPhone
           });
         }
@@ -305,19 +306,19 @@ function AppContent() {
   // Handler: Generate Bill & Save to Cloud Firestore
   const handleGenerateBill = async () => {
     if (orderItems.length === 0) {
-      alert('Please add at least one cloth item to generate a bill.');
+      window.alert('Please add at least one cloth item to generate a bill.');
       return;
     }
     if (hasRegular && regWeightNum <= 0) {
-      alert('Please enter the Regular Wash clothes weight (kg).');
+      window.alert('Please enter the Regular Wash clothes weight (kg).');
       return;
     }
     if (hasPremium && premWeightNum <= 0) {
-      alert('Please enter the Premium Care clothes weight (kg).');
+      window.alert('Please enter the Premium Care clothes weight (kg).');
       return;
     }
     if (!customer.name.trim() || !customer.phone.trim()) {
-      alert('Please enter customer Name and WhatsApp Phone number before generating the bill.');
+      window.alert('Please enter customer Name and WhatsApp Phone number before generating the bill.');
       return;
     }
 

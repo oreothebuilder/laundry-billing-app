@@ -13,6 +13,15 @@ import {
 } from 'lucide-react';
 import { buildWhatsAppReceiptMessage, getWhatsAppShareUrl, formatDisplayPhoneNumber } from '../utils/whatsappHelper';
 
+// Safe date parser to handle Firestore Timestamps ({ seconds }), strings, and Date instances
+const parseOrderDate = (val) => {
+  if (!val) return null;
+  if (typeof val.toDate === 'function') return val.toDate();
+  if (val.seconds) return new Date(val.seconds * 1000);
+  const d = new Date(val);
+  return isNaN(d.getTime()) ? null : d;
+};
+
 export default function OrderHistory({ 
   orders = [], 
   shopSettings = {}, 
@@ -24,21 +33,23 @@ export default function OrderHistory({
   const [serviceFilter, setServiceFilter] = useState('all');
   const [paymentFilter, setPaymentFilter] = useState('all');
 
-  const currency = shopSettings.currency || '₹';
+  const currency = shopSettings?.currency || '₹';
+  const validOrders = Array.isArray(orders) ? orders.filter(Boolean) : [];
 
-  const totalRevenue = orders.reduce((sum, o) => sum + (o.grandTotal || 0), 0);
-  const pendingCount = orders.filter(o => o.paymentStatus !== 'paid').length;
-  const collectedCount = orders.filter(o => o.paymentStatus === 'paid').length;
+  const totalRevenue = validOrders.reduce((sum, o) => sum + (Number(o?.grandTotal) || 0), 0);
+  const pendingCount = validOrders.filter(o => o?.paymentStatus !== 'paid').length;
+  const collectedCount = validOrders.filter(o => o?.paymentStatus === 'paid').length;
 
-  const filteredOrders = orders.filter(order => {
-    const term = searchTerm.toLowerCase();
+  const filteredOrders = validOrders.filter(order => {
+    if (!order) return false;
+    const term = (searchTerm || '').toLowerCase();
     const matchesSearch = 
       (order.customerName && order.customerName.toLowerCase().includes(term)) ||
       (order.customerPhone && order.customerPhone.includes(term)) ||
       (order.orderId && order.orderId.toLowerCase().includes(term));
     
     const matchesService = serviceFilter === 'all' || 
-      (order.selectedServices && order.selectedServices.includes(serviceFilter)) ||
+      (Array.isArray(order.selectedServices) && order.selectedServices.includes(serviceFilter)) ||
       order.serviceType === serviceFilter;
       
     const matchesPayment = paymentFilter === 'all' ||
@@ -48,6 +59,7 @@ export default function OrderHistory({
   });
 
   const handleSendWhatsApp = (order) => {
+    if (!order) return;
     const msg = buildWhatsAppReceiptMessage(order, shopSettings);
     const url = getWhatsAppShareUrl(order.customerPhone, msg);
     window.open(url, '_blank', 'noopener,noreferrer');
@@ -62,7 +74,7 @@ export default function OrderHistory({
           <h2 className="text-base sm:text-lg font-extrabold text-slate-900">All Bills</h2>
         </div>
         <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">
-          {orders.length} {orders.length === 1 ? 'Bill' : 'Bills'}
+          {validOrders.length} {validOrders.length === 1 ? 'Bill' : 'Bills'}
         </span>
       </div>
 
@@ -70,7 +82,7 @@ export default function OrderHistory({
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4">
         <div className="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs">
           <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-400">Total Bills</p>
-          <p className="text-xl sm:text-2xl font-extrabold text-slate-900 mt-0.5">{orders.length}</p>
+          <p className="text-xl sm:text-2xl font-extrabold text-slate-900 mt-0.5">{validOrders.length}</p>
         </div>
         <div className="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs">
           <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-amber-500">Pending</p>
@@ -82,7 +94,7 @@ export default function OrderHistory({
         </div>
         <div className="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs">
           <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-blue-500">Total Revenue</p>
-          <p className="text-xl sm:text-2xl font-extrabold text-blue-700 mt-0.5">{currency}{totalRevenue}</p>
+          <p className="text-xl sm:text-2xl font-extrabold text-blue-700 mt-0.5">{currency}{totalRevenue.toLocaleString('en-IN')}</p>
         </div>
       </div>
 
@@ -98,35 +110,36 @@ export default function OrderHistory({
             className="w-full pl-9 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-xl text-base sm:text-xs font-medium focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500 transition-all"
           />
           {searchTerm && (
-            <button 
-              onClick={() => setSearchTerm('')} 
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 p-1"
+            <button
+              type="button"
+              onClick={() => setSearchTerm('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600 font-bold p-1 cursor-pointer"
             >
               ✕
             </button>
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
+        {/* Filters */}
+        <div className="flex gap-2 flex-wrap items-center">
           <select
             value={serviceFilter}
             onChange={(e) => setServiceFilter(e.target.value)}
-            className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-hidden"
+            className="text-xs bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 font-bold text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-blue-500 cursor-pointer"
           >
             <option value="all">All Services</option>
             <option value="regular">Regular Wash</option>
             <option value="premium">Premium Care</option>
             <option value="dry_cleaning">Dry Cleaning</option>
-            <option value="others">Others</option>
           </select>
 
           <select
             value={paymentFilter}
             onChange={(e) => setPaymentFilter(e.target.value)}
-            className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-hidden"
+            className="text-xs bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 font-bold text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-blue-500 cursor-pointer"
           >
             <option value="all">All Payments</option>
-            <option value="pending">Pending Payment</option>
+            <option value="pending">Pending</option>
             <option value="paid">Collected</option>
           </select>
         </div>
@@ -141,14 +154,24 @@ export default function OrderHistory({
       ) : (
         <div className="space-y-3">
           {filteredOrders.map((order) => {
+            if (!order) return null;
             const isPaid = order.paymentStatus === 'paid';
-            const formattedDate = order.createdAt 
-              ? new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+            const orderDate = parseOrderDate(order.createdAt);
+            const formattedDate = orderDate 
+              ? orderDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
               : '';
+
+            const itemsList = Array.isArray(order.items) 
+              ? order.items 
+              : (order.items && typeof order.items === 'object' ? Object.values(order.items) : []);
+
+            const itemsSummary = itemsList.length > 0
+              ? itemsList.map(i => `${i?.quantity || 1}x ${i?.name || 'Item'}`).join(', ')
+              : 'No item list';
 
             return (
               <div
-                key={order.orderId}
+                key={order.orderId || Math.random()}
                 className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs hover:border-slate-300 transition-all flex flex-col gap-3"
               >
                 {/* 1. Header Row: ID, Service, Timestamp & Price */}
@@ -159,7 +182,7 @@ export default function OrderHistory({
                         #{order.orderId}
                       </span>
                       <span className="font-extrabold text-sm sm:text-base text-slate-900">
-                        {order.customerName}
+                        {order.customerName || 'Customer'}
                       </span>
                     </div>
 
@@ -181,10 +204,10 @@ export default function OrderHistory({
 
                   <div className="text-right shrink-0">
                     <span className="text-base sm:text-xl font-black text-slate-900">
-                      {currency}{order.grandTotal}
+                      {currency}{order.grandTotal ?? 0}
                     </span>
                     <div className="text-[10px] font-bold text-slate-500 uppercase mt-0.5">
-                      {order.serviceName}
+                      {order.serviceName || 'Laundry'}
                     </div>
                   </div>
                 </div>
@@ -193,10 +216,10 @@ export default function OrderHistory({
                 <div className="bg-slate-50 rounded-xl p-2.5 sm:p-3 text-xs text-slate-600 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 border border-slate-100">
                   <div className="truncate">
                     <span className="font-bold text-slate-800">
-                      {order.totalPieces} clothes {order.totalWeight ? `(${order.totalWeight}kg)` : ''}:
+                      {order.totalPieces || itemsList.length} clothes {order.totalWeight ? `(${order.totalWeight}kg)` : ''}:
                     </span>{' '}
                     <span className="text-slate-600">
-                      {(order.items || []).map(i => `${i.quantity}x ${i.name}`).join(', ') || 'No item list'}
+                      {itemsSummary}
                     </span>
                   </div>
 
@@ -259,7 +282,7 @@ export default function OrderHistory({
                   <button
                     type="button"
                     onClick={() => {
-                      if (window.confirm(`Delete bill #${order.orderId} for ${order.customerName}?`)) {
+                      if (window.confirm(`Delete bill #${order.orderId} for ${order.customerName || 'Customer'}?`)) {
                         onDeleteOrder && onDeleteOrder(order.orderId);
                       }
                     }}
