@@ -99,10 +99,10 @@ export default function Navbar({
                     ? 'bg-blue-50 text-blue-700 border-blue-200'
                     : 'text-slate-700 hover:bg-slate-100 border-slate-200'
                 }`}
-                title="All Orders History"
+                title="All Bills"
               >
                 <History className="w-4 h-4 text-slate-500" />
-                <span className="hidden sm:inline">Orders</span>
+                <span className="hidden sm:inline font-bold">All Bills</span>
                 {ordersCount > 0 && (
                   <span className="text-[10px] font-bold bg-slate-200 text-slate-700 px-1.5 py-0.2 rounded-full">
                     {ordersCount}

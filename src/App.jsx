@@ -412,6 +412,8 @@ function AppContent() {
 
   // Payment Status Update & Instant WhatsApp Notification to Owner
   const handleUpdatePaymentStatus = async (orderId, newPaymentStatus, paymentMode = 'UPI') => {
+    // Optimistic UI update
+    setOrders(prev => prev.map(o => (o.orderId === orderId || o.id === orderId) ? { ...o, paymentStatus: newPaymentStatus, paymentMode } : o));
     await firebaseService.updatePaymentStatus(orderId, newPaymentStatus, paymentMode);
 
     // If marked paid, trigger instant WhatsApp alert to shop owner
@@ -448,6 +450,8 @@ function AppContent() {
 
   // Firestore Delete
   const handleDeleteOrder = async (orderId) => {
+    // Optimistic UI update
+    setOrders(prev => prev.filter(o => o.orderId !== orderId && o.id !== orderId));
     await firebaseService.deleteOrder(orderId);
   };
 
