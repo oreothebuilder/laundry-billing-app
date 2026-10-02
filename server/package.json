@@ -1,0 +1,16 @@
+{
+  "name": "laundry-whatsapp-gateway",
+  "version": "1.0.0",
+  "description": "Free zero-AI headless WhatsApp automation gateway for laundry billing",
+  "main": "whatsapp_gateway.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node whatsapp_gateway.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "cors": "^2.8.5",
+    "qrcode-terminal": "^0.12.0",
+    "whatsapp-web.js": "^1.26.0"
+  }
+}

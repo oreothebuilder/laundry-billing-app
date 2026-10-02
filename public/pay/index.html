@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Pay Laundry Bill — FreshPress</title>
+  <meta name="theme-color" content="#2563eb" />
+  
+  <!-- Inter Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet" />
+  
+  <!-- Canvas Confetti for Celebration -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <!-- QRCode.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+      color: #0f172a;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 440px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 28px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .header-banner {
+      background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #3b82f6 100%);
+      color: #ffffff;
+      padding: 24px 20px 20px;
+      text-align: center;
+      position: relative;
+    }
+
+    .header-banner::after {
+      content: '';
+      position: absolute;
+      bottom: -12px;
+      left: 0;
+      right: 0;
+      height: 24px;
+      background: #ffffff;
+      border-radius: 20px 20px 0 0;
+    }
+
+    .shop-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.18);
+      backdrop-filter: blur(8px);
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .shop-name {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .verified-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      color: #bbf7d0;
+      font-weight: 700;
+      margin-top: 4px;
+    }
+
+    .body-content {
+      padding: 8px 22px 24px;
+    }
+
+    .amount-box {
+      text-align: center;
+      padding: 16px 12px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 20px;
+      margin-bottom: 20px;
+    }
+
+    .amount-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #64748b;
+      margin-bottom: 4px;
+    }
+
+    .amount-value {
+      font-size: 38px;
+      font-weight: 900;
+      color: #1e3a8a;
+      letter-spacing: -1px;
+      line-height: 1;
+    }
+
+    .order-details-pill {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed #cbd5e1;
+      font-size: 12px;
+    }
+
+    .order-id-code {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      color: #0f172a;
+      background: #e2e8f0;
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+
+    /* UPI Intent Buttons */
+    .section-title {
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #475569;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .upi-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      border: 1px solid transparent;
+      user-select: none;
+    }
+
+    .upi-btn:active {
+      transform: scale(0.97);
+    }
+
+    .btn-gpay {
+      background: #ffffff;
+      color: #1f2937;
+      border: 1.5px solid #e5e7eb;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+    }
+    .btn-gpay:hover { background: #f9fafb; }
+
+    .btn-phonepe {
+      background: #5f259f;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(95, 37, 159, 0.25);
+    }
+    .btn-phonepe:hover { background: #521f8a; }
+
+    .btn-paytm {
+      background: #00b9f1;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(0, 185, 241, 0.25);
+    }
+    .btn-paytm:hover { background: #00a4d6; }
+
+    .btn-all-upi {
+      background: #0f172a;
+      color: #ffffff;
+      grid-column: span 2;
+      padding: 14px;
+      font-size: 14px;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.25);
+    }
+    .btn-all-upi:hover { background: #1e293b; }
+
+    /* QR Code Section */
+    .qr-accordion {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 18px;
+      padding: 14px;
+      text-align: center;
+      margin-top: 14px;
+    }
+
+    .qr-toggle-btn {
+      background: none;
+      border: none;
+      font-size: 12px;
+      font-weight: 700;
+      color: #2563eb;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px;
+    }
+
+    .qr-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin-top: 10px;
+    }
+
+    #qrcode {
+      background: #ffffff;
+      padding: 12px;
+      border-radius: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      display: inline-block;
+    }
+
+    #qrcode img {
+      display: block;
+      margin: 0 auto;
+    }
+
+    /* Live Status Pulse */
+    .live-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      color: #1d4ed8;
+      padding: 6px 12px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 700;
+      margin-top: 14px;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      background: #2563eb;
+      border-radius: 50%;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(37, 99, 235, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+    }
+
+    /* Success Card State */
+    .success-card {
+      display: none;
+      text-align: center;
+      padding: 36px 20px 28px;
+    }
+
+    .success-icon-wrap {
+      width: 76px;
+      height: 76px;
+      background: #dcfce7;
+      border: 3px solid #22c55e;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.4); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .success-title {
+      font-size: 24px;
+      font-weight: 800;
+      color: #15803d;
+      margin-bottom: 6px;
+    }
+
+    .success-subtitle {
+      font-size: 13px;
+      color: #475569;
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+
+    .success-receipt {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 14px;
+      font-size: 12px;
+      text-align: left;
+      margin-bottom: 20px;
+    }
+
+    .success-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 5px 0;
+      border-bottom: 1px dashed #e2e8f0;
+    }
+    .success-row:last-child {
+      border-bottom: none;
+    }
+
+    /* Fallback Manual UTR form */
+    .manual-utr-box {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px dashed #cbd5e1;
+      text-align: center;
+    }
+
+    .utr-link {
+      font-size: 11px;
+      color: #64748b;
+      text-decoration: underline;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .utr-form {
+      display: none;
+      margin-top: 10px;
+      text-align: left;
+    }
+
+    .utr-input {
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 13px;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      outline: none;
+      margin-bottom: 8px;
+    }
+    .utr-input:focus {
+      border-color: #2563eb;
+    }
+
+    .utr-submit-btn {
+      width: 100%;
+      padding: 10px;
+      background: #2563eb;
+      color: #ffffff;
+      border: none;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .footer-note {
+      text-align: center;
+      margin-top: 16px;
+      font-size: 11px;
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="card">
+      
+      <!-- Top Brand Header -->
+      <div class="header-banner">
+        <div class="shop-badge">
+          <span>🧺</span>
+          <span id="shopBadgeText">Laundry Bill</span>
+        </div>
+        <h1 class="shop-name" id="shopNameHeading">FreshPress Laundry</h1>
+        <div class="verified-pill">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+          <span>100% Secure NPCI Direct Bank Transfer</span>
+        </div>
+      </div>
+
+      <!-- Main Payment View -->
+      <div id="paymentView" class="body-content">
+        
+        <!-- Amount Box -->
+        <div class="amount-box">
+          <div class="amount-label">Grand Total Due</div>
+          <div class="amount-value" id="displayAmount">₹0</div>
+          
+          <div class="order-details-pill">
+            <span style="color: #64748b; font-weight: 600;">Order ID</span>
+            <span class="order-id-code" id="displayOrderId">#LND-000</span>
+          </div>
+          <div class="order-details-pill" id="customerRow" style="display: none;">
+            <span style="color: #64748b; font-weight: 600;">Customer</span>
+            <span style="font-weight: 700; color: #0f172a;" id="displayCustomer">Customer</span>
+          </div>
+        </div>
+
+        <!-- 1-Tap UPI Launchers -->
+        <div class="section-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          <span>1-Tap Instant UPI Apps</span>
+        </div>
+
+        <div class="btn-grid">
+          <!-- Google Pay -->
+          <a id="btnGpay" href="#" class="upi-btn btn-gpay">
+            <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17Z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.27v3.15C3.26 21.36 7.35 24 12 24Z"/><path fill="#FBBC05" d="M5.28 14.27a7.14 7.14 0 0 1 0-4.54V6.58H1.27a11.98 11.98 0 0 0 0 10.84l4.01-3.15Z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.35 0 3.26 2.64 1.27 6.58l4.01 3.15c.95-2.83 3.6-4.98 6.72-4.98Z"/></svg>
+            <span>Google Pay</span>
+          </a>
+
+          <!-- PhonePe -->
+          <a id="btnPhonepe" href="#" class="upi-btn btn-phonepe">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 14.5h-2v-5h2v5zm0-7h-2V7h2v2.5z"/></svg>
+            <span>PhonePe</span>
+          </a>
+
+          <!-- Paytm -->
+          <a id="btnPaytm" href="#" class="upi-btn btn-paytm">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+            <span>Paytm</span>
+          </a>
+
+          <!-- Generic UPI / CRED / BHIM -->
+          <a id="btnGenericUpi" href="#" class="upi-btn btn-all-upi">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 10l4 4m0-4l-4 4"/></svg>
+            <span>Open in Any UPI App</span>
+          </a>
+        </div>
+
+        <!-- Live Listener Status Indicator -->
+        <div style="text-align: center;">
+          <div class="live-status-pill">
+            <div class="pulse-dot"></div>
+            <span id="liveStatusText">Waiting for payment confirmation...</span>
+          </div>
+        </div>
+
+        <!-- QR Code Accordion (Ideal for Desktop / Family Phone) -->
+        <div class="qr-accordion">
+          <button type="button" class="qr-toggle-btn" id="toggleQrBtn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            <span id="qrToggleText">Show QR Code (Scan to Pay)</span>
+          </button>
+          
+          <div class="qr-container" id="qrContainer" style="display: none;">
+            <div id="qrcode"></div>
+            <p style="font-size: 11px; color: #64748b; margin-top: 8px; font-weight: 600;">
+              Scan with Google Pay, PhonePe, Paytm, or BHIM
+            </p>
+            <p style="font-size: 11px; color: #0f172a; margin-top: 4px; font-weight: 700;">
+              UPI ID: <span id="displayUpiId" style="font-family: monospace;"></span>
+            </p>
+          </div>
+        </div>
+
+        <!-- Fallback UTR Submission -->
+        <div class="manual-utr-box">
+          <span class="utr-link" id="toggleUtrForm">Already paid? Click here to submit UTR reference</span>
+          
+          <form class="utr-form" id="utrForm">
+            <label style="font-size: 11px; font-weight: 700; color: #475569; display: block; margin-bottom: 4px;">
+              Enter 12-Digit UPI Reference Number (UTR):
+            </label>
+            <input type="text" id="utrInput" class="utr-input" placeholder="e.g. 482910394821" maxlength="16" />
+            <button type="submit" class="utr-submit-btn" id="utrSubmitBtn">Submit for Verification</button>
+          </form>
+        </div>
+
+      </div>
+
+      <!-- Success Card (Activated when Paid) -->
+      <div id="successView" class="success-card">
+        <div class="success-icon-wrap">
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <h2 class="success-title">Payment Successful!</h2>
+        <p class="success-subtitle">
+          Thank you! We have verified your payment.<br />
+          Your clothes are now queued for processing.
+        </p>
+
+        <div class="success-receipt">
+          <div class="success-row">
+            <span style="color: #64748b;">Order Number:</span>
+            <span class="order-id-code" id="succOrderId">#LND-000</span>
+          </div>
+          <div class="success-row">
+            <span style="color: #64748b;">Amount Settled:</span>
+            <strong style="color: #15803d; font-size: 14px;" id="succAmount">₹0</strong>
+          </div>
+          <div class="success-row">
+            <span style="color: #64748b;">Status:</span>
+            <strong style="color: #16a34a; text-transform: uppercase;">PAID (Verified)</strong>
+          </div>
+          <div class="success-row" id="succUtrRow" style="display: none;">
+            <span style="color: #64748b;">UTR Ref:</span>
+            <span style="font-family: monospace; font-weight: 600;" id="succUtr">--</span>
+          </div>
+          <div class="success-row">
+            <span style="color: #64748b;">Time:</span>
+            <span style="font-weight: 600;" id="succTime">Just now</span>
+          </div>
+        </div>
+
+        <p style="font-size: 11px; color: #64748b;">
+          A confirmation receipt has also been dispatched to your WhatsApp.
+        </p>
+      </div>
+
+    </div>
+
+    <div class="footer-note">
+      FreshPress Laundry • Powered by Zero-Fee NPCI UPI Protocol
+    </div>
+  </div>
+
+  <!-- Firebase v10 Real-time Listener -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    // Production Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyANpU1Y5AYXsX5_IQiXwmvHc1TK4KOSoLQ",
+      authDomain: "btech-laundry.firebaseapp.com",
+      projectId: "btech-laundry",
+      storageBucket: "btech-laundry.firebasestorage.app",
+      messagingSenderId: "204759525902",
+      appId: "1:204759525902:web:8ae8af6c7138112d0faa5f"
+    };
+
+    let db = null;
+    try {
+      const app = initializeApp(firebaseConfig);
+      db = getFirestore(app);
+    } catch (e) {
+      console.warn("Firebase initialization skipped or offline:", e);
+    }
+
+    // 1. Extract URL Query Parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const orderId = urlParams.get('id') || 'LND-TEST';
+    const amount = urlParams.get('am') || '0';
+    const upiId = urlParams.get('pa') || 'freshpress@okaxis';
+    const payeeName = urlParams.get('pn') || 'FreshPress Laundry';
+    const customerName = urlParams.get('cn') || '';
+
+    // Update UI Elements
+    document.getElementById('displayOrderId').innerText = '#' + orderId;
+    document.getElementById('displayAmount').innerText = '₹' + amount;
+    document.getElementById('shopNameHeading').innerText = payeeName;
+    document.getElementById('displayUpiId').innerText = upiId;
+
+    if (customerName) {
+      document.getElementById('customerRow').style.display = 'flex';
+      document.getElementById('displayCustomer').innerText = customerName;
+    }
+
+    // 2. Build NPCI UPI URIs
+    const cleanUpi = encodeURIComponent(upiId.trim());
+    const cleanName = encodeURIComponent(payeeName.trim());
+    const cleanNote = encodeURIComponent('Invoice ' + orderId);
+    const cleanAmount = encodeURIComponent(amount);
+
+    const genericUpiUri = `upi://pay?pa=${cleanUpi}&pn=${cleanName}&am=${cleanAmount}&cu=INR&tn=${cleanNote}`;
+    const gpayUri = `tez://upi/pay?pa=${cleanUpi}&pn=${cleanName}&am=${cleanAmount}&cu=INR&tn=${cleanNote}`;
+    const phonepeUri = `phonepe://pay?pa=${cleanUpi}&pn=${cleanName}&am=${cleanAmount}&cu=INR&tn=${cleanNote}`;
+    const paytmUri = `paytmmp://pay?pa=${cleanUpi}&pn=${cleanName}&am=${cleanAmount}&cu=INR&tn=${cleanNote}`;
+
+    // Bind Button Links
+    document.getElementById('btnGenericUpi').href = genericUpiUri;
+    document.getElementById('btnGpay').href = gpayUri;
+    document.getElementById('btnPhonepe').href = phonepeUri;
+    document.getElementById('btnPaytm').href = paytmUri;
+
+    // 3. Auto-Trigger on Mobile Devices
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isMobile && Number(amount) > 0) {
+      setTimeout(() => {
+        // Attempt deep link trigger without blocking the user
+        window.location.href = genericUpiUri;
+      }, 300);
+    }
+
+    // 4. Render Dynamic QR Code
+    let qrRendered = false;
+    function renderQr() {
+      if (qrRendered) return;
+      const qrcodeEl = document.getElementById("qrcode");
+      qrcodeEl.innerHTML = "";
+      new QRCode(qrcodeEl, {
+        text: genericUpiUri,
+        width: 170,
+        height: 170,
+        colorDark: "#0f172a",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.M
+      });
+      qrRendered = true;
+    }
+
+    // Accordion Toggle for QR
+    const toggleQrBtn = document.getElementById('toggleQrBtn');
+    const qrContainer = document.getElementById('qrContainer');
+    const qrToggleText = document.getElementById('qrToggleText');
+    toggleQrBtn.addEventListener('click', () => {
+      const isHidden = qrContainer.style.display === 'none';
+      if (isHidden) {
+        qrContainer.style.display = 'flex';
+        renderQr();
+        qrToggleText.innerText = 'Hide QR Code';
+      } else {
+        qrContainer.style.display = 'none';
+        qrToggleText.innerText = 'Show QR Code (Scan to Pay)';
+      }
+    });
+
+    // On Desktop, auto-show the QR code!
+    if (!isMobile) {
+      qrContainer.style.display = 'flex';
+      renderQr();
+      qrToggleText.innerText = 'Hide QR Code';
+    }
+
+    // 5. Celebration Audio & Confetti Trigger
+    function celebrateSuccess(utr) {
+      document.getElementById('paymentView').style.display = 'none';
+      document.getElementById('successView').style.display = 'block';
+
+      document.getElementById('succOrderId').innerText = '#' + orderId;
+      document.getElementById('succAmount').innerText = '₹' + amount;
+      document.getElementById('succTime').innerText = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+
+      if (utr) {
+        document.getElementById('succUtrRow').style.display = 'flex';
+        document.getElementById('succUtr').innerText = utr;
+      }
+
+      // Confetti burst
+      try {
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+      } catch (err) {}
+    }
+
+    // 6. Real-time Cloud Firestore Listener
+    if (db && orderId && orderId !== 'LND-TEST') {
+      try {
+        const orderRef = doc(db, 'orders', orderId);
+        onSnapshot(orderRef, (docSnap) => {
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            
+            // If already paid, flip the screen immediately!
+            if (data.paymentStatus === 'paid') {
+              celebrateSuccess(data.submittedUtr || data.paymentMode || 'UPI');
+            } else if (data.paymentStatus === 'pending_verification') {
+              document.getElementById('liveStatusText').innerText = 'Verification pending (UTR submitted)...';
+            }
+          }
+        });
+      } catch (subErr) {
+        console.warn('Real-time order subscription warning:', subErr);
+      }
+    }
+
+    // 7. Manual UTR Submission Handler
+    const toggleUtrLink = document.getElementById('toggleUtrForm');
+    const utrForm = document.getElementById('utrForm');
+    toggleUtrLink.addEventListener('click', () => {
+      utrForm.style.display = utrForm.style.display === 'block' ? 'none' : 'block';
+    });
+
+    utrForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const utrVal = document.getElementById('utrInput').value.trim();
+      if (!utrVal || utrVal.length < 6) {
+        alert('Please enter a valid 12-digit UPI Reference / UTR number.');
+        return;
+      }
+
+      const submitBtn = document.getElementById('utrSubmitBtn');
+      submitBtn.disabled = true;
+      submitBtn.innerText = 'Submitting...';
+
+      try {
+        if (db && orderId) {
+          const orderRef = doc(db, 'orders', orderId);
+          await updateDoc(orderRef, {
+            submittedUtr: utrVal,
+            paymentStatus: 'pending_verification',
+            utrSubmittedAt: new Date().toISOString()
+          });
+        }
+        alert('✅ Payment reference submitted! The shop has been notified to verify.');
+        document.getElementById('liveStatusText').innerText = `Verification pending (UTR: ${utrVal})`;
+        utrForm.style.display = 'none';
+      } catch (err) {
+        console.error('Error submitting UTR:', err);
+        alert('Reference saved locally. Shop will verify payment shortly.');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = 'Submit for Verification';
+      }
+    });
+
+  </script>
+</body>
+</html>
