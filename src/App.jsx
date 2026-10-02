@@ -508,8 +508,8 @@ function AppContent() {
             shopSettings={shopSettings}
             onNavigate={setActiveTab}
             onViewOrder={(ord) => setCurrentBillModalOrder(ord)}
-            onUpdateOrderStatus={handleUpdateOrderStatus}
             onUpdatePaymentStatus={handleUpdatePaymentStatus}
+            onDeleteOrder={handleDeleteOrder}
           />
         )}
 

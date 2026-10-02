@@ -10,23 +10,31 @@ import {
   AlertCircle,
   Sparkles,
   CreditCard,
-  CheckCircle2
+  CheckCircle2,
+  Send,
+  Eye,
+  Trash2,
+  Phone
 } from 'lucide-react';
+import { buildWhatsAppReceiptMessage, getWhatsAppShareUrl, formatDisplayPhoneNumber } from '../utils/whatsappHelper';
 
 export default function Dashboard({
   orders = [],
   shopSettings = {},
   onNavigate,
   onViewOrder,
-  onUpdateOrderStatus,
-  onUpdatePaymentStatus
+  onUpdatePaymentStatus,
+  onDeleteOrder
 }) {
   const currency = shopSettings.currency || '₹';
 
-  // 1. Orders under cleaning (status is 'received' or 'washing')
-  const underCleaningOrders = orders.filter(
-    o => o.orderStatus === 'received' || o.orderStatus === 'washing'
-  );
+  const handleSendWhatsApp = (order) => {
+    const msg = buildWhatsAppReceiptMessage(order, shopSettings);
+    const url = getWhatsAppShareUrl(order.customerPhone, msg);
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const displayOrders = orders.slice(0, 8);
 
   // 2. Money collected this week
   // Calculate start of current week (Monday 00:00:00)
@@ -205,74 +213,134 @@ export default function Dashboard({
           </button>
         </div>
 
-        {underCleaningOrders.length === 0 ? (
+        {displayOrders.length === 0 ? (
           <div className="p-8 text-center border border-dashed border-slate-200 rounded-xl text-slate-400 text-xs">
-            No active orders.
+            No bills created yet.
           </div>
         ) : (
-          <div className="space-y-2.5 max-h-[460px] overflow-y-auto pr-1">
-            {underCleaningOrders.map(order => (
-              <div 
-                key={order.orderId}
-                className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-3 hover:bg-slate-100/70 transition-colors"
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-extrabold text-xs sm:text-sm text-slate-900 truncate">
-                      {order.customerName}
-                    </span>
-                    <span className="text-[10px] font-mono bg-blue-100 text-blue-800 font-bold px-1.5 py-0.2 rounded">
-                      #{order.orderId}
+          <div className="space-y-3 max-h-[520px] overflow-y-auto pr-1">
+            {displayOrders.map(order => {
+              const isPaid = order.paymentStatus === 'paid';
+              const formattedDate = order.createdAt 
+                ? new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
+                : '';
+
+              return (
+                <div 
+                  key={order.orderId}
+                  className="p-3.5 sm:p-4 rounded-2xl bg-slate-50/70 border border-slate-200/80 flex flex-col gap-2.5 hover:bg-slate-100/60 transition-colors"
+                >
+                  {/* Order Info Header */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-mono font-extrabold text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md">
+                          #{order.orderId}
+                        </span>
+                        <span className="font-extrabold text-xs sm:text-sm text-slate-900">
+                          {order.customerName}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2.5 text-[11px] text-slate-500 font-mono mt-1">
+                        {order.customerPhone && (
+                          <a href={`tel:${order.customerPhone}`} className="flex items-center gap-1 hover:text-blue-600 hover:underline">
+                            <Phone className="w-3 h-3 text-slate-400" />
+                            <span>{formatDisplayPhoneNumber(order.customerPhone)}</span>
+                          </a>
+                        )}
+                        {formattedDate && (
+                          <span className="text-slate-400">• {formattedDate}</span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="text-right shrink-0">
+                      <span className="text-sm sm:text-base font-black text-slate-900">
+                        {currency}{order.grandTotal}
+                      </span>
+                      <div className="text-[10px] font-bold text-slate-500 uppercase mt-0.5">
+                        {order.serviceName}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Order Clothes Summary */}
+                  <div className="text-[11px] text-slate-600 bg-white/80 rounded-xl px-2.5 py-1.5 border border-slate-200/60 truncate">
+                    <span className="font-bold text-slate-800">
+                      {order.totalPieces} clothes {order.totalWeight ? `(${order.totalWeight}kg)` : ''}:
+                    </span>{' '}
+                    <span className="text-slate-500">
+                      {(order.items || []).map(i => `${i.quantity}x ${i.name}`).join(', ') || 'No item list'}
                     </span>
                   </div>
 
-                  <p className="text-[11px] text-slate-500 mt-0.5">
-                    {order.totalPieces} clothes {order.totalWeight ? `(${order.totalWeight}kg)` : ''} •{' '}
-                    <span className="font-bold text-slate-700">{order.serviceName}</span>
-                  </p>
-                </div>
+                  {/* The 4 Action Buttons ONLY */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 border-t border-slate-200/60">
+                    {/* Button 1: Collect Payment (Toggles to Collected) */}
+                    {isPaid ? (
+                      <button
+                        type="button"
+                        onClick={() => onUpdatePaymentStatus && onUpdatePaymentStatus(order.orderId, 'pending', 'pending')}
+                        className="py-1.5 px-2.5 rounded-xl bg-emerald-100 hover:bg-amber-100 hover:text-amber-900 text-emerald-800 border border-emerald-300 text-xs font-extrabold flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-xs"
+                        title="Click to mark as Collect Payment"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        <span className="truncate">Collected</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => onUpdatePaymentStatus && onUpdatePaymentStatus(order.orderId, 'paid', 'UPI')}
+                        className="py-1.5 px-2.5 rounded-xl bg-amber-500 hover:bg-emerald-600 text-white border border-amber-600 hover:border-emerald-700 text-xs font-extrabold flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-xs"
+                        title="Click to mark as Collected"
+                      >
+                        <CreditCard className="w-3.5 h-3.5 shrink-0" />
+                        <span className="truncate">Collect Payment</span>
+                      </button>
+                    )}
 
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <span className="text-xs sm:text-sm font-extrabold text-slate-900 mr-1 sm:mr-2">
-                    {currency}{order.grandTotal}
-                  </span>
-
-                  {order.paymentStatus === 'paid' ? (
+                    {/* Button 2: Send WhatsApp */}
                     <button
                       type="button"
-                      onClick={() => onUpdatePaymentStatus && onUpdatePaymentStatus(order.orderId, 'pending', 'pending')}
-                      className="px-2.5 py-1 text-[11px] font-extrabold rounded-lg bg-emerald-100 hover:bg-amber-100 hover:text-amber-900 text-emerald-800 border border-emerald-300 transition-all flex items-center gap-1 active:scale-95 cursor-pointer shadow-xs"
-                      title="Click to toggle to Collect Payment"
+                      onClick={() => handleSendWhatsApp(order)}
+                      className="py-1.5 px-2.5 rounded-xl bg-[#25D366] hover:bg-[#1EBE5D] text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs active:scale-95 transition-all cursor-pointer"
+                      title="Send Bill Receipt on WhatsApp"
                     >
-                      <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                      <span>Collected</span>
+                      <Send className="w-3.5 h-3.5 stroke-[2.5] shrink-0" />
+                      <span className="truncate">Send WhatsApp</span>
                     </button>
-                  ) : (
+
+                    {/* Button 3: View Bill */}
                     <button
                       type="button"
-                      onClick={() => onUpdatePaymentStatus && onUpdatePaymentStatus(order.orderId, 'paid', 'UPI')}
-                      className="px-2.5 py-1 text-[11px] font-extrabold rounded-lg bg-amber-500 hover:bg-emerald-600 text-white border border-amber-600 hover:border-emerald-700 transition-all flex items-center gap-1 active:scale-95 cursor-pointer shadow-xs"
-                      title="Click to mark as Collected"
+                      onClick={() => onViewOrder && onViewOrder(order)}
+                      className="py-1.5 px-2.5 rounded-xl border border-slate-200 hover:border-blue-300 hover:text-blue-700 active:bg-slate-100 text-slate-700 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                      title="View Bill Receipt"
                     >
-                      <CreditCard className="w-3 h-3" />
-                      <span>Collect Payment</span>
+                      <Eye className="w-3.5 h-3.5 shrink-0" />
+                      <span className="truncate">View Bill</span>
                     </button>
-                  )}
 
-                  <button
-                    type="button"
-                    onClick={() => onUpdateOrderStatus(order.orderId, order.orderStatus === 'received' ? 'washing' : 'ready')}
-                    className={`px-3 py-1 text-[11px] font-bold rounded-lg transition-all active:scale-95 ${
-                      order.orderStatus === 'received'
-                        ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                        : 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                    }`}
-                  >
-                    {order.orderStatus === 'received' ? 'Start Wash' : 'Mark Ready'}
-                  </button>
+                    {/* Button 4: Delete */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (window.confirm(`Delete bill #${order.orderId} for ${order.customerName}?`)) {
+                          onDeleteOrder && onDeleteOrder(order.orderId);
+                        }
+                      }}
+                      className="py-1.5 px-2.5 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 active:bg-rose-100 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                      title="Delete Bill"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 shrink-0" />
+                      <span className="truncate">Delete</span>
+                    </button>
+                  </div>
+
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
