@@ -5,7 +5,7 @@ import {
   TrendingUp, 
   Settings, 
   Shirt,
-  History,
+  FileText,
   LogOut,
   UserCheck
 } from 'lucide-react';
@@ -20,8 +20,8 @@ export default function Navbar({
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, badge: null },
-    { id: 'issue_bill', label: 'Issue Bill', icon: PlusCircle, badge: null },
-    { id: 'track_money', label: 'Track Money', icon: TrendingUp, badge: null },
+    { id: 'history', label: 'All bills', icon: FileText, badge: ordersCount > 0 ? ordersCount : null },
+    { id: 'track_money', label: 'Track money', icon: TrendingUp, badge: null },
     { id: 'settings', label: 'Settings', icon: Settings, badge: null },
   ];
 
@@ -69,7 +69,7 @@ export default function Navbar({
                   <button
                     key={item.id}
                     onClick={() => setActiveTab(item.id)}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold transition-all ${
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold transition-all cursor-pointer ${
                       isActive
                         ? 'bg-white text-blue-600 shadow-xs font-bold'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
@@ -87,27 +87,22 @@ export default function Navbar({
               })}
             </nav>
 
-            {/* Right side Actions (Orders History shortcut, Auth indicator, Logout) */}
+            {/* Right side Actions (Issue Bill button, Auth indicator, Logout) */}
             <div className="flex items-center gap-1.5 sm:gap-2">
               
-              {/* Order History Button */}
+              {/* Primary Top Bar Action: Issue Bill Button (Replaces old clock icon) */}
               <button
                 type="button"
-                onClick={() => setActiveTab('history')}
-                className={`p-1.5 sm:px-3 sm:py-1.5 rounded-xl border flex items-center gap-1.5 text-xs font-semibold active:scale-95 transition-all ${
-                  activeTab === 'history'
-                    ? 'bg-blue-50 text-blue-700 border-blue-200'
-                    : 'text-slate-700 hover:bg-slate-100 border-slate-200'
+                onClick={() => setActiveTab('issue_bill')}
+                className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl flex items-center gap-1.5 text-xs sm:text-sm font-extrabold active:scale-95 transition-all shadow-xs cursor-pointer ${
+                  activeTab === 'issue_bill'
+                    ? 'bg-blue-700 text-white shadow-blue-600/30 ring-2 ring-blue-300'
+                    : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/20'
                 }`}
-                title="All Bills"
+                title="Issue Bill"
               >
-                <History className="w-4 h-4 text-slate-500" />
-                <span className="hidden sm:inline font-bold">All Bills</span>
-                {ordersCount > 0 && (
-                  <span className="text-[10px] font-bold bg-slate-200 text-slate-700 px-1.5 py-0.2 rounded-full">
-                    {ordersCount}
-                  </span>
-                )}
+                <PlusCircle className="w-4 h-4 stroke-[2.5]" />
+                <span>Issue Bill</span>
               </button>
 
               {/* Authenticated User Badge & Logout */}
@@ -127,7 +122,7 @@ export default function Navbar({
                   <button
                     type="button"
                     onClick={handleLogout}
-                    className="p-1.5 sm:px-2.5 sm:py-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 rounded-xl transition-all text-xs font-bold flex items-center gap-1"
+                    className="p-1.5 sm:px-2.5 sm:py-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 rounded-xl transition-all text-xs font-bold flex items-center gap-1 cursor-pointer"
                     title="Log Out of POS"
                   >
                     <LogOut className="w-4 h-4" />
@@ -155,7 +150,7 @@ export default function Navbar({
                   setActiveTab(item.id);
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
-                className={`flex flex-col items-center justify-center gap-0.5 relative py-1 transition-colors ${
+                className={`flex flex-col items-center justify-center gap-0.5 relative py-1 transition-colors cursor-pointer ${
                   isActive ? 'text-blue-600' : 'text-slate-500 hover:text-slate-800'
                 }`}
               >
@@ -167,7 +162,7 @@ export default function Navbar({
                     </span>
                   )}
                 </div>
-                <span className={`text-[9px] tracking-tight ${isActive ? 'font-bold' : 'font-medium'}`}>
+                <span className={`text-[10px] tracking-tight capitalize ${isActive ? 'font-bold' : 'font-medium'}`}>
                   {item.label}
                 </span>
                 {isActive && (

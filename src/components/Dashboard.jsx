@@ -5,7 +5,6 @@ import {
   Settings, 
   Shirt, 
   ArrowRight, 
-  Clock, 
   IndianRupee, 
   AlertCircle,
   Sparkles,
