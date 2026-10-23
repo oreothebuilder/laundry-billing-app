@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Crown, Shirt, Flame, CheckCircle2, Clock, Check, Plus } from 'lucide-react';
+import { Sparkles, Crown, Shirt, Flame, Check, Plus } from 'lucide-react';
 import { DEFAULT_SERVICES } from '../data/defaultItems';
 
 const ICON_MAP = {
@@ -109,13 +109,9 @@ export default function ServiceSelector({
                 <h3 className="font-extrabold text-slate-900 text-xs sm:text-sm">{srv.name}</h3>
               </div>
 
-              <div className="pt-2 mt-2 border-t border-slate-100 text-[10px] flex items-center justify-between gap-1">
-                <span className="font-extrabold text-slate-800 bg-slate-100 px-1.5 py-0.5 rounded-md">
+              <div className="pt-2 mt-2 border-t border-slate-100 text-[10px] flex items-center">
+                <span className="font-extrabold text-slate-800 bg-slate-100 px-2 py-0.5 rounded-md">
                   {rateBadge}
-                </span>
-                <span className="text-slate-400 font-medium flex items-center gap-0.5">
-                  <Clock className="w-3 h-3 text-slate-400" />
-                  <span>{srv.turnaround}</span>
                 </span>
               </div>
             </button>
