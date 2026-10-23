@@ -100,8 +100,8 @@ export const DEFAULT_CATEGORY_ITEMS = {
 };
 
 export const DEFAULT_SHOP_SETTINGS = {
-  shopName: 'FreshPress Laundry & Dry Cleaners',
-  shopTagline: 'Caring for your clothes like family',
+  shopName: 'BTech Drycleaners',
+  shopTagline: 'Drycleaning and Laundry Specialist',
   phone: '',
   ownerWhatsAppPhone: '',
   shopUpiId: '',

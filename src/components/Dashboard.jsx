@@ -94,7 +94,7 @@ export default function Dashboard({
               </span>
             </div>
             <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white">
-              {shopSettings?.shopName || 'FreshPress Laundry'} POS
+              {shopSettings?.shopName || 'BTech Drycleaners'} POS
             </h1>
           </div>
 

@@ -4,7 +4,6 @@ import {
   PlusCircle, 
   TrendingUp, 
   Settings, 
-  Shirt,
   FileText,
   LogOut,
   UserCheck
@@ -26,7 +25,7 @@ export default function Navbar({
   ];
 
   const handleLogout = async () => {
-    if (window.confirm('Are you sure you want to log out from FreshPress POS?')) {
+    if (window.confirm('Are you sure you want to log out from BTech Drycleaners POS?')) {
       try {
         await logout();
       } catch (err) {
@@ -47,17 +46,14 @@ export default function Navbar({
               className="flex items-center gap-2 cursor-pointer active:scale-95 transition-transform"
               onClick={() => setActiveTab('dashboard')}
             >
-              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
-                <Shirt className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-              </div>
-              <div>
-                <div className="flex items-center gap-1.5">
-                  <span className="font-extrabold text-sm sm:text-lg tracking-tight text-slate-900">FreshPress</span>
-                  <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider bg-blue-100 text-blue-700 px-1.5 py-0.2 rounded-md">
-                    POS
-                  </span>
-                </div>
-              </div>
+              <img 
+                src="/logo.png" 
+                alt="BTech Drycleaners" 
+                className="h-8 sm:h-9 w-auto object-contain" 
+              />
+              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-md self-center">
+                POS
+              </span>
             </div>
 
             {/* Desktop Navigation Tabs (Hidden on mobile) */}

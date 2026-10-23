@@ -66,8 +66,8 @@ export function formatPhoneNumberForWhatsApp(phone, defaultCountryCode = '91') {
  * Works with GPay, PhonePe, Paytm, BHIM, Cred, etc.
  */
 export function buildUpiPaymentUrl(order, shopSettings = {}) {
-  const upiId = (shopSettings.shopUpiId || 'freshpress@upi').trim();
-  const payeeName = (shopSettings.shopName || 'FreshPress Laundry').trim();
+  const upiId = (shopSettings.shopUpiId || 'btech@upi').trim();
+  const payeeName = (shopSettings.shopName || 'BTech Drycleaners').trim();
   const amount = order.grandTotal || 0;
   const transactionNote = `Invoice ${order.orderId}`;
 
@@ -91,8 +91,8 @@ export function buildPaymentRedirectUrl(order, shopSettings = {}) {
   // Strip trailing slash
   baseUrl = baseUrl.replace(/\/+$/, '');
 
-  const upiId = (shopSettings.shopUpiId || 'freshpress@okaxis').trim();
-  const payeeName = (shopSettings.shopName || 'FreshPress Laundry').trim();
+  const upiId = (shopSettings.shopUpiId || 'btech@okaxis').trim();
+  const payeeName = (shopSettings.shopName || 'BTech Drycleaners').trim();
   const amount = order.grandTotal || 0;
   const orderId = order.orderId || '';
   const customerName = order.customerName || '';
@@ -129,7 +129,7 @@ export function parseOrderDate(val) {
 export function buildWhatsAppReceiptMessage(order, shopSettings = {}) {
   if (!order) return '';
   const currency = shopSettings?.currency || '₹';
-  const shopName = shopSettings?.shopName || 'FreshPress Laundry';
+  const shopName = shopSettings?.shopName || 'BTech Drycleaners';
   const upiId = shopSettings?.shopUpiId || '';
   
   let lines = [];
@@ -269,7 +269,7 @@ export function buildWhatsAppReceiptMessage(order, shopSettings = {}) {
  */
 export function buildPaymentSuccessWhatsAppMessage(order, shopSettings = {}) {
   const currency = shopSettings.currency || '₹';
-  const shopName = shopSettings.shopName || 'FreshPress Laundry';
+  const shopName = shopSettings.shopName || 'BTech Drycleaners';
   
   return [
     `🎉 *PAYMENT CONFIRMED — ${shopName.toUpperCase()}* 🧺`,
@@ -291,7 +291,7 @@ export function buildPaymentSuccessWhatsAppMessage(order, shopSettings = {}) {
  */
 export function buildOwnerPaymentNotificationMessage(order, shopSettings = {}) {
   const currency = shopSettings.currency || '₹';
-  const shopName = shopSettings.shopName || 'FreshPress Laundry';
+  const shopName = shopSettings.shopName || 'BTech Drycleaners';
   
   return [
     `🎉 *PAYMENT RECEIVED — ${shopName.toUpperCase()}*`,

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shirt, Lock, Mail, Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react';
+import { Lock, Mail, Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function LoginScreen() {
@@ -47,13 +47,13 @@ export default function LoginScreen() {
       <div className="w-full max-w-sm space-y-6">
         
         {/* Header */}
-        <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20">
-            <Shirt className="w-7 h-7" />
+        <div className="text-center space-y-3">
+          <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-white shadow-md border border-slate-200/80">
+            <img src="/logo.png" alt="BTech Drycleaners" className="h-14 sm:h-16 w-auto object-contain" />
           </div>
           <div>
             <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-              FreshPress POS
+              POS Sign In
             </h1>
           </div>
         </div>

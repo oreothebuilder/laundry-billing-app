@@ -160,7 +160,7 @@ export default function SettingsPage({
   };
 
   const handleLogout = async () => {
-    if (window.confirm('Log out of FreshPress POS?')) {
+    if (window.confirm('Log out of BTech Drycleaners POS?')) {
       await logout();
     }
   };

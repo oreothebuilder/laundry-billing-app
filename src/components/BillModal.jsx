@@ -161,13 +161,8 @@ export default function BillModal({
                 {/* Brand & Order Details */}
                 <div className="flex justify-between items-start border-b border-slate-200 pb-3">
                   <div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center">
-                        <Shirt className="w-4 h-4 text-blue-600" />
-                      </div>
-                      <h2 className="font-extrabold text-base sm:text-lg tracking-tight text-slate-900">
-                        {shopSettings.shopName}
-                      </h2>
+                    <div className="flex items-center gap-2 mb-1">
+                      <img src="/logo.png" alt={shopSettings.shopName || "BTech Drycleaners"} className="h-9 sm:h-10 w-auto object-contain" />
                     </div>
                     {shopSettings.address && (
                       <p className="text-[11px] text-slate-500 mt-0.5">
