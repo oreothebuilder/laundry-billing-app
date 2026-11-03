@@ -616,7 +616,7 @@ export default function SettingsPage({
                 type="text"
                 value={formData.shopUpiId || ''}
                 onChange={(e) => setFormData({ ...formData, shopUpiId: e.target.value })}
-                placeholder="e.g. freshpress@okaxis or 9876543210@paytm"
+                placeholder="e.g. btech@okaxis or 9876543210@paytm"
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
               />
             </div>
